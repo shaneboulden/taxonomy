@@ -1,0 +1,169 @@
+created_by: shaneboulden
+version: 2
+task_description: Teach the model to generate StackRox policies as Kubernetes custom resources
+seed_examples:
+  - question: |
+      Create a StackRox policy that identifies netcat inside container images at build and deploy-time
+    answer: |
+      Here's a StackRox policy that identifies netcat inside a container image at build and deploy time:
+
+      kind: SecurityPolicy
+      apiVersion: config.stackrox.io/v1alpha1
+      metadata:
+        name: netcat-in-image
+      spec:
+        policyName: Netcat in Image
+        categories:
+        - Package Management
+        description: This policy checks for container images containing netcat
+        disabled: false
+        remediation: Use the base image package manager to remove "nmap-ncat"
+        lifecycleStages:
+        - BUILD
+        - DEPLOY
+        policySections:
+        - sectionName: Rule 1
+          policyGroups:
+          - fieldName: Image Component
+            booleanOperator: OR
+            negate: false
+            values:
+            - value: nmap-ncat=
+        rationale: Netcat potentially allows attackers to move laterally, and access external
+          services from a running pod
+        severity: HIGH_SEVERITY
+
+  - question: |
+      Create a StackRox policy that identifies deployment with images that haven't been scanned in 30 days
+    answer: |
+      Here's a policy that identifies deployments with images that haven't been scanned in 30 days:
+
+      kind: SecurityPolicy
+      apiVersion: config.stackrox.io/v1alpha1
+      metadata:
+        name: 30-day-scan-age
+      spec:
+        policyName: 30-Day Scan Age
+        categories:
+        - Security Best Practices
+        - Supply Chain Security
+        description: Alert on deployments with images that haven't been scanned in 30 days
+        disabled: false
+        remediation: Integrate a scanner with the StackRox Kubernetes Security Platform
+          to trigger scans automatically.
+        lifecycleStages:
+        - DEPLOY
+        policySections:
+        - sectionName: ''
+          policyGroups:
+          - fieldName: Image Scan Age
+            booleanOperator: OR
+            negate: false
+            values:
+            - value: '30'
+        rationale: Out-of-date scans may not identify the most recent CVEs.
+        severity: MEDIUM_SEVERITY
+
+  - question: |
+      Create a StackRox policy that identifies curl inside container images at build and deploy-time
+    answer: |
+      Here's a policy that identifies curl inside container images at build and deploy-time:
+
+      kind: SecurityPolicy
+      apiVersion: config.stackrox.io/v1alpha1
+      metadata:
+        name: curl-in-image
+      spec:
+        policyName: Curl in Image
+        categories:
+        - Security Best Practices
+        description: Alert on deployments with curl present
+        disabled: true
+        remediation: Use your package manager's "remove", "purge" or "erase" command to
+          remove curl from the image build for production containers. Ensure that any configuration
+          files are also removed.
+        lifecycleStages:
+        - BUILD
+        - DEPLOY
+        policySections:
+        - sectionName: ''
+          policyGroups:
+          - fieldName: Image Component
+            booleanOperator: OR
+            negate: false
+            values:
+            - value: curl=
+        rationale: Leaving download tools like curl in an image makes it easier for attackers
+          to use compromised containers, since they can easily download software.
+        severity: LOW_SEVERITY
+
+  - question: |
+      Create a StackRox policy that identifies deployments with fixable vulnerabilities with a
+      Severity Rating at least Important
+    answer: |
+      Here's a policy that identifies deployments with fixable vulnerabilities with a Severity
+      Rating at least Important:
+
+      kind: SecurityPolicy
+      apiVersion: config.stackrox.io/v1alpha1
+      metadata:
+        name: fixable-severity-at-least-important
+      spec:
+        policyName: Fixable Severity at least Important
+        categories:
+        - Vulnerability Management
+        description: Alert on deployments with fixable vulnerabilities with a Severity Rating
+          at least Important
+        disabled: false
+        remediation: Use your package manager to update to a fixed version in future builds
+          or speak with your security team to mitigate the vulnerabilities.
+        lifecycleStages:
+        - BUILD
+        - DEPLOY
+        policySections:
+        - sectionName: ''
+          policyGroups:
+          - fieldName: Fixed By
+            booleanOperator: OR
+            negate: false
+            values:
+            - value: .*
+          - fieldName: Severity
+            booleanOperator: OR
+            negate: false
+            values:
+            - value: '>= IMPORTANT'
+        rationale: Known vulnerabilities make it easier for adversaries to exploit your
+          application. You can fix these high-severity vulnerabilities by updating to a
+          newer version of the affected component(s).
+        severity: HIGH_SEVERITY
+
+  - question: |
+      Create a StackRox policy that identifies processes that are known to use setuid binaries at runtime
+    answer: |
+      Here's a policy that identifies processes that are known to use setuid binaries at runtime:
+
+      kind: SecurityPolicy
+      apiVersion: config.stackrox.io/v1alpha1
+      metadata:
+        name: setuid-processes
+      spec:
+        policyName: SetUID Processes
+        categories:
+        - System Modification
+        description: Processes that are known to use setuid binaries
+        disabled: true
+        remediation: Ensure that the base image used to create the Dockerfile doesn't have
+          setuid software packaged with it.
+        lifecycleStages:
+        - RUNTIME
+        policySections:
+        - sectionName: ''
+          policyGroups:
+          - fieldName: Process Name
+            booleanOperator: OR
+            negate: false
+            values:
+            - value: sshd|dbus-daemon-lau|ping|ping6|critical-stack-|pmmcli|filemng|PassengerAgent|bwrap|osdetect|nginxmng|sw-engine-fpm|start-stop-daem
+        rationale: setuid permits users to run certain programs with escalated privileges
+        severity: HIGH_SEVERITY
