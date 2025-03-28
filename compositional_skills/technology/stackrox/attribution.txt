@@ -1,0 +1,3 @@
+StackRox policy examples sourced from the default policies, available at: https://github.com/stackrox/stackrox/tree/master/pkg/defaults/policies/files
+Policies were converted to Kubernetes custom resources using the open source code `export2gitops.py` script, available here: https://github.com/stackrox/contributions/pull/117
+StackRox is an open source project licensed under the Apache 2.0 license. 
